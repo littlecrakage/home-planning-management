@@ -1,0 +1,20 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Database — never commit this
+*.db
+instance/
+
+# Environment / secrets
+.env
+*.env
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

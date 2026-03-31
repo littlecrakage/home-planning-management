@@ -1,0 +1,12 @@
+services:
+  home-planner:
+    build: .
+    container_name: home-planner
+    ports:
+      - "2026:8000"   # change 2026 to any free port on your server
+    volumes:
+      - home-planner-db:/app/instance
+    restart: unless-stopped
+
+volumes:
+  home-planner-db:

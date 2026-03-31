@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Homes — Home Planner{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+  <h1 class="h3 mb-0 fw-bold page-title">🏠 Choose a Home</h1>
+  <button class="btn btn-ocean ms-auto" data-bs-toggle="modal" data-bs-target="#addHomeModal">
+    + Add Home
+  </button>
+</div>
+
+<div class="row g-4 mb-4">
+  {% for h in all_homes %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card sea-card shadow-sm h-100">
+      <div class="card-body text-center py-4">
+        <div style="font-size: 3rem; margin-bottom: 0.5rem; line-height: 1;">{{ h.icon }}</div>
+        <h4 class="card-title fw-bold mb-3">{{ h.name }}</h4>
+        <a href="{{ url_for('index', hid=h.id) }}" class="btn btn-ocean btn-lg w-100 mb-3">
+          <i class="bi bi-calendar-week me-1"></i>Open Planning
+        </a>
+        <div class="d-flex gap-2 justify-content-center">
+          <button class="btn btn-sm btn-outline-secondary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#editHomeModal{{ h.id }}">
+            <i class="bi bi-pencil me-1"></i>Rename
+          </button>
+          {% if all_homes|length > 1 %}
+          <form method="post" action="{{ url_for('delete_home', hid=h.id) }}"
+                onsubmit="return confirm('Delete {{ h.name }}? Members and tasks will be deactivated.')">
+            <button class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash me-1"></i>Delete
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Edit modal #}
+  <div class="modal fade" id="editHomeModal{{ h.id }}" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <form method="post" action="{{ url_for('edit_home', hid=h.id) }}">
+          <div class="modal-header">
+            <h5 class="modal-title">Rename Home</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Name</label>
+              <input type="text" name="name" class="form-control" value="{{ h.name }}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Icon (emoji)</label>
+              <input type="text" name="icon" class="form-control" value="{{ h.icon }}" maxlength="5">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-ocean">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{# Add Home Modal #}
+<div class="modal fade" id="addHomeModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('add_home') }}">
+        <div class="modal-header">
+          <h5 class="modal-title">+ Add Home</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Name</label>
+            <input type="text" name="name" class="form-control"
+                   placeholder="e.g. Beach House" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Icon (emoji)</label>
+            <input type="text" name="icon" class="form-control" value="🏠" maxlength="5">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-ocean">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

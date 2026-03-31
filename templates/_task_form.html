@@ -1,0 +1,58 @@
+<div class="mb-3">
+  <label class="form-label fw-semibold">Task name <span class="text-danger">*</span></label>
+  <input type="text" name="name" class="form-control" placeholder="e.g. Vacuum floors" required>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6">
+    <label class="form-label fw-semibold">Importance</label>
+    <select name="importance" class="form-select">
+      <option value="1">1 — Low</option>
+      <option value="2">2 — Minor</option>
+      <option value="3" selected>3 — Normal</option>
+      <option value="4">4 — Important</option>
+      <option value="5">5 — Critical</option>
+    </select>
+  </div>
+  <div class="col-6">
+    <label class="form-label fw-semibold">Effort</label>
+    <select name="effort" class="form-select">
+      <option value="1">1 — Quick (&lt;5 min)</option>
+      <option value="2">2 — Easy (5-15 min)</option>
+      <option value="3" selected>3 — Medium (15-30 min)</option>
+      <option value="4">4 — Heavy (30-60 min)</option>
+      <option value="5">5 — Major (&gt;1 hour)</option>
+    </select>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-7">
+    <label class="form-label fw-semibold">Recurrence</label>
+    <select name="recurrence" class="form-select">
+      <option value="daily">Daily — every remaining day this week</option>
+      <option value="every2days">Every 2 days — alternating days this week</option>
+      <option value="weekly" selected>Weekly — once this week</option>
+      <option value="adhoc">Ad-hoc — once, when needed</option>
+      <option value="biweekly">Bi-weekly — every two weeks (list only)</option>
+      <option value="monthly">Monthly — once a month (list only)</option>
+    </select>
+  </div>
+  <div class="col-5">
+    <label class="form-label fw-semibold">Room / Category</label>
+    <select name="category" class="form-select">
+      <option value="">— None —</option>
+      {% for cat in categories %}
+      <option value="{{ cat.name }}">{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<div class="form-check form-switch mt-1">
+  <input class="form-check-input" type="checkbox" name="requires_two" id="requires_two_check" value="1">
+  <label class="form-check-label fw-semibold" for="requires_two_check">
+    👥 Requires both people
+    <small class="text-muted fw-normal">— assigned to everyone</small>
+  </label>
+</div>

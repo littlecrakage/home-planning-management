@@ -1,0 +1,193 @@
+/* ── Palette ────────────────────────────────────────────────────────────────
+   ocean-deep   #1a6b6b   navbar, table header
+   ocean-mid    #2a9d8f   primary action
+   seafoam      #52b5aa   hover, accent
+   coral        #e76f51   secondary action, importance-5
+   sand-light   #fdf6ee   page background
+   sand-card    #ffffff   card background
+   sand-border  #e8ddd0   card border
+   aqua-today   #e3f6f5   today row highlight
+   text-warm    #3d3530   main text
+──────────────────────────────────────────────────────────────────────────── */
+
+/* ── General ────────────────────────────────────────────────────────────── */
+body {
+  background: #fdf6ee;
+  color: #3d3530;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Navbar ─────────────────────────────────────────────────────────────── */
+.navbar {
+  background: #1a6b6b !important;
+}
+.navbar-brand {
+  font-size: 1.1rem;
+  letter-spacing: 0.4px;
+  color: #d4f0ed !important;
+}
+.nav-link {
+  font-size: 0.9rem;
+  color: #b2deda !important;
+}
+.nav-link:hover, .nav-link.active {
+  color: #ffffff !important;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.btn-ocean {
+  background: #2a9d8f;
+  color: #fff;
+  border: none;
+}
+.btn-ocean:hover { background: #238078; color: #fff; }
+
+.btn-outline-coral {
+  border: 1.5px solid #e76f51;
+  color: #e76f51;
+  background: transparent;
+}
+.btn-outline-coral:hover { background: #e76f51; color: #fff; }
+
+/* ── Alert ──────────────────────────────────────────────────────────────── */
+.alert-sea {
+  background: #e3f6f5;
+  border: 1px solid #7ecdc7;
+  color: #1a6b6b;
+  border-radius: 10px;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.sea-card {
+  border: 1px solid #e8ddd0 !important;
+  border-radius: 12px !important;
+  background: #fff;
+}
+.sea-card-header {
+  background: #f5f0ea !important;
+  border-bottom: 1px solid #e8ddd0;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 12px 16px;
+  color: #1a6b6b;
+  font-size: 0.95rem;
+}
+
+/* ── Plan table ─────────────────────────────────────────────────────────── */
+.plan-table { font-size: 0.87rem; }
+.plan-table thead th { font-size: 0.85rem; white-space: nowrap; }
+.day-col { width: 88px; }
+.day-cell { white-space: nowrap; vertical-align: middle !important; }
+.day-name { display: block; font-size: 0.95rem; }
+.day-date { font-size: 0.76rem; display: block; }
+.tasks-cell { min-width: 160px; }
+
+.thead-ocean th {
+  background: #1a6b6b;
+  color: #e8f8f7;
+  font-weight: 600;
+  border-color: #155858 !important;
+}
+
+.today-row { background: #e3f6f5 !important; }
+.today-arrow { color: #2a9d8f; font-size: 0.7rem; margin-right: 2px; }
+
+/* ── Task list inside cells ─────────────────────────────────────────────── */
+.task-list { list-style: none; padding: 0; margin: 0; }
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f3ede5;
+  flex-wrap: wrap;
+}
+.task-item:last-child { border-bottom: none; }
+
+.task-bullet {
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  margin-top: 3px;
+  opacity: 0.7;
+}
+.task-name { font-size: 0.83rem; line-height: 1.3; flex: 1; }
+.two-people-badge { font-size: 0.75rem; margin-left: 2px; }
+.task-badges { display: flex; gap: 3px; align-items: center; }
+
+/* ── Importance badges ──────────────────────────────────────────────────── */
+.importance-badge {
+  font-size: 0.62rem;
+  letter-spacing: -0.5px;
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+.imp-1 { background: #b2bec3 !important; color: #2d3436 !important; }
+.imp-2 { background: #74b9b0 !important; color: #fff !important; }
+.imp-3 { background: #f4a261 !important; color: #fff !important; }
+.imp-4 { background: #e07b5a !important; color: #fff !important; }
+.imp-5 { background: #c1440e !important; color: #fff !important; }
+
+.effort-badge {
+  background: #4a7c78 !important;
+  font-size: 0.60rem;
+  letter-spacing: -0.5px;
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+
+.cat-badge {
+  background: #c8dbd9 !important;
+  color: #1a5252 !important;
+  font-size: 0.68rem;
+}
+
+/* ── Period list (bi-weekly / monthly) ──────────────────────────────────── */
+.period-list-item {
+  background: #fff !important;
+  border-color: #f0e9e0 !important;
+}
+.period-bullet { font-size: 1rem; }
+
+/* ── Dot indicators (tasks page) ────────────────────────────────────────── */
+.dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #d5cec7;
+}
+.dot.filled { background: #2a9d8f; }
+.effort-dots-row { display: flex; gap: 3px; justify-content: center; }
+
+/* ── Importance stars in task table ─────────────────────────────────────── */
+.importance-stars { font-size: 0.8rem; }
+.bi-star-fill { color: #f4a261; }
+.bi-star { color: #d5cec7; }
+
+/* ── Member avatar (members page) ───────────────────────────────────────── */
+.member-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ── Member dot ─────────────────────────────────────────────────────────── */
+.member-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ── Page titles ────────────────────────────────────────────────────────── */
+.page-title { color: #1a6b6b; }
+
+/* ── Print override ─────────────────────────────────────────────────────── */
+@media print {
+  .no-print, nav, .alert, form { display: none !important; }
+  body { background: #fff; }
+  .sea-card { box-shadow: none !important; }
+}

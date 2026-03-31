@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weekly Plan (by category) — {{ today.strftime('%b %d, %Y') }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 8.5pt;
+      color: #2d2d2d;
+      background: #fff;
+      padding: 5mm 7mm;
+    }
+
+    /* ── Screen toolbar ── */
+    .no-print {
+      background: #e3f6f5; border: 1px solid #7ecdc7;
+      padding: 9px 14px; border-radius: 8px; margin-bottom: 12px;
+      display: flex; gap: 12px; align-items: center; font-size: 10pt;
+    }
+    .btn-print {
+      background: #1a6b6b; color: #fff; border: none;
+      padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 10pt;
+    }
+
+    /* ── Page header ── */
+    .print-header {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      border-bottom: 2px solid #1a6b6b;
+      padding-bottom: 3px; margin-bottom: 8px;
+    }
+    .print-header h1 { font-size: 13pt; font-weight: 800; color: #1a6b6b; }
+    .print-header .sub { font-size: 7.5pt; color: #666; margin-top: 1px; }
+    .legend {
+      display: flex; gap: 10px; align-items: center;
+      font-size: 8pt; flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 3px; }
+    .leg-badge {
+      width: 16px; height: 16px; border-radius: 3px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 7.5pt; font-weight: 700; color: #fff;
+    }
+    .leg-checkbox {
+      width: 10px; height: 10px; border: 1.5px solid #666;
+      border-radius: 2px; display: inline-block;
+    }
+
+    /* ── Category block grid ──────────────────────────────────────────────────
+       CSS columns fills each column top-to-bottom before starting the next,
+       which naturally balances total content height across columns.
+       3 columns on landscape print; 2 on screen.                           */
+    .blocks-grid {
+      column-count: 2;
+      column-gap: 8px;
+    }
+    @media print {
+      .blocks-grid { column-count: 4; }
+    }
+
+    /* ── Individual category block ── */
+    .cat-block {
+      /* inline-block is required for CSS column layout */
+      display: inline-block;
+      width: 100%;
+      vertical-align: top;
+      margin-bottom: 4px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      border: 1px solid #c8dbd9;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .cat-block-header {
+      background: #1a6b6b;
+      color: #fff;
+      font-weight: 800;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 3px 7px;
+      border-left: 3px solid #52c5b8;
+    }
+
+    /* ── Sub-label (Daily / This week) ── */
+    .sub-label {
+      background: #2a9d8f;
+      color: #fff;
+      font-size: 7pt;
+      font-weight: 700;
+      padding: 1px 7px;
+      letter-spacing: 0.2px;
+    }
+
+    /* ── Mini table (rows=days, cols=tasks) ── */
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 7.5pt;
+      /* fixed layout: all task columns share the remaining width equally */
+      table-layout: fixed;
+    }
+
+    /* Task column headers — always rotated, uniform width */
+    .mini-table th {
+      background: #f0faf9;
+      color: #1a6b6b;
+      font-weight: 700;
+      border: 1px solid #d0e8e5;
+      padding: 3px 0 0 0;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      font-size: 7.5pt;
+      text-align: left;
+      vertical-align: center;
+      height: 52px;
+      width: 20px;
+    }
+
+    /* Day column — stays horizontal, fixed width */
+    .mini-table th.day-header {
+      writing-mode: horizontal-tb;
+      transform: none;
+      text-align: left;
+      width: 34px;
+      height: auto;
+      background: #e3f6f5;
+      color: #1a6b6b;
+      white-space: nowrap;
+      padding: 3px 5px;
+      vertical-align: middle;
+    }
+    .mini-table td {
+      border: 1px solid #d8eeec;
+      padding: 1px 2px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .mini-table td.day-cell {
+      font-size: 6.5pt;
+      font-weight: 600;
+      color: #1a6b6b;
+      background: #e3f6f5;
+      white-space: nowrap;
+      text-align: left;
+      padding: 1px 3px;
+    }
+    .mini-table td.day-cell.today-cell {
+      background: #2a9d8f;
+      color: #fff;
+    }
+    .mini-table tr:nth-child(even) td:not(.day-cell) { background: #fafefe; }
+
+    /* ── Assignment cell content ── */
+    .assign-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .m-badge {
+      width: 12px; height: 12px;
+      border-radius: 2px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 6.5pt; font-weight: 700; color: #fff;
+    }
+    .m-checkbox {
+      width: 8px; height: 8px;
+      border: 1px solid #555;
+      border-radius: 1px;
+      display: inline-block;
+    }
+    .two-assign {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .two-icon { font-size: 9pt; line-height: 1; }
+    .empty-dash { color: #ccc; font-size: 8pt; }
+
+    /* ── Weekly item list inside a block ── */
+    .weekly-list {
+      padding: 2px 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .weekly-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 7pt;
+      padding: 1px 0;
+      border-bottom: 1px dotted #d8eeec;
+    }
+    .weekly-item:last-child { border-bottom: none; }
+    .w-checkbox {
+      width: 10px; height: 10px;
+      border: 1.5px solid #555;
+      border-radius: 2px;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+    .w-name { flex: 1; }
+    .w-day  { font-size: 7pt; color: #888; white-space: nowrap; }
+    .w-who  { font-size: 7.5pt; font-weight: 700; white-space: nowrap; }
+
+    /* ── Period sections (bi-weekly / monthly) ── */
+    .period-section { margin-top: 8px; break-inside: avoid; page-break-inside: avoid; }
+    .period-title {
+      font-size: 10pt; font-weight: 700; color: #1a6b6b;
+      border-bottom: 1.5px solid #2a9d8f;
+      padding-bottom: 3px; margin-bottom: 8px;
+    }
+    .period-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+    .period-table th {
+      background: #1a6b6b; color: #e8f8f7;
+      padding: 4px 7px; font-weight: 600;
+      border: 1px solid #155858;
+    }
+    .period-table td { border: 1px solid #d8eeec; padding: 3px 7px; }
+    .period-table .cat-row td {
+      background: #1a6b6b; color: #fff;
+      font-weight: 700; font-size: 7.5pt; text-transform: uppercase;
+      letter-spacing: 0.5px; border-left: 3px solid #52c5b8;
+    }
+
+    /* ── Footer ── */
+    .print-footer {
+      margin-top: 6px; border-top: 1px solid #ccc;
+      padding-top: 3px; font-size: 7pt; color: #aaa;
+      display: flex; justify-content: space-between;
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { padding: 2mm 3mm; }
+      @page { margin: 3mm; size: landscape; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  Layout 2: one table per room — rows = days, columns = tasks
+  <button class="btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+  <a href="{{ url_for('print_view_next' if is_next_week else 'print_view', hid=hid) }}" target="_blank" style="font-size:10pt; color:#1a6b6b;">Switch to Layout 1</a>
+  <a href="{{ url_for('index_next' if is_next_week else 'index', hid=hid) }}" style="font-size:10pt; color:#1a6b6b;">← Back</a>
+</div>
+
+{# ── Page header ─────────────────────────────────────────────────────────────── #}
+
+{# ── Category blocks grid ─────────────────────────────────────────────────────── #}
+{% if display_groups %}
+<div class="blocks-grid">
+
+  {% for group in display_groups %}
+  <div class="cat-block">
+
+    {# Category header — shows one or two category names when combined #}
+    <div class="cat-block-header">🏠 {{ group.labels | join(' · ') }}</div>
+
+    {# ── Daily tasks: rows=days, cols=tasks ──────────────────────────────── #}
+    {% if group.daily %}
+    <div class="sub-label">📅 Daily</div>
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th class="day-header">Day</th>
+          {% for task in group.daily %}
+          <th title="{{ task.name }}">{{ task.name }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in remaining_days %}
+        <tr>
+          <td class="day-cell {% if day == today %}today-cell{% endif %}">
+            {{ day.strftime('%a %d') }}
+          </td>
+          {% for task in group.daily %}
+          {% set da = task_day_map[task.id].get(day, []) %}
+          {% if da %}
+            {% if task.requires_two %}
+            <td style="background:#2a9d8f15;">
+              <div class="two-assign">
+                <span class="two-icon">👥</span>
+                <span class="m-checkbox"></span>
+              </div>
+            </td>
+            {% else %}
+            <td style="background:{{ da[0].member.color }}18;">
+              <div class="assign-wrap">
+                <span class="m-badge" style="background:{{ da[0].member.color }};">
+                  {{ da[0].member.name[0] }}
+                </span>
+                <span class="m-checkbox"></span>
+              </div>
+            </td>
+            {% endif %}
+          {% else %}
+            <td><span class="empty-dash">—</span></td>
+          {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {# ── Weekly / ad-hoc tasks: compact list ─────────────────────────────── #}
+    {% if group.weekly %}
+    <div class="sub-label">📋 This week</div>
+    <div class="weekly-list">
+      {% for task in group.weekly %}
+      {% set assigned_day  = task_day_map[task.id].keys() | list | first %}
+      {% set assigned_list = task_day_map[task.id][assigned_day] %}
+      <div class="weekly-item">
+        <span class="w-checkbox"></span>
+        <span class="w-name">
+          {{ task.name }}
+          {% if task.requires_two %}<span style="font-size:7pt;">👥</span>{% endif %}
+        </span>
+        <span class="w-day">{{ assigned_day.strftime('%a') }}</span>
+        {% if task.requires_two %}
+          <span class="w-who" style="color:#2a9d8f;">Both</span>
+        {% else %}
+          <span class="w-who" style="color:{{ assigned_list[0].member.color }};">
+            {{ assigned_list[0].member.name[0] }}
+          </span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>{# /cat-block #}
+  {% endfor %}
+
+</div>{# /blocks-grid #}
+
+{% else %}
+<p style="color:#aaa; text-align:center; padding:30px;">
+  No plan generated yet — go back and click Generate Plan.
+</p>
+{% endif %}
+
+
+{# ── Bi-weekly section ────────────────────────────────────────────────────────── #}
+{% if biweekly_assignments %}
+{% set seen_bw = namespace(v=[]) %}
+<div class="period-section">
+  <div class="period-title">🔁 Bi-weekly Tasks (this fortnight)</div>
+  <table class="period-table">
+    <thead>
+      <tr>
+        <th style="width:38%;">Task</th>
+        <th style="width:16%;">Room</th>
+        <th style="width:10%; text-align:center;">★</th>
+        <th style="width:20%;">Who</th>
+        <th style="width:16%; text-align:center;">Done</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set bw_cur_cat = namespace(v=None) %}
+      {% for a in biweekly_assignments | sort(attribute='task.category') | sort(attribute='task.importance', reverse=True) %}
+      {% if a.task_id not in seen_bw.v %}
+      {% set seen_bw.v = seen_bw.v + [a.task_id] %}
+      {% set this_cat = a.task.category if a.task.category else '' %}
+      {% if this_cat != bw_cur_cat.v %}
+        {% set bw_cur_cat.v = this_cat %}
+        <tr class="cat-row"><td colspan="5">🏠 {{ this_cat if this_cat else 'General' }}</td></tr>
+      {% endif %}
+      <tr>
+        <td>{{ a.task.name }} {% if a.task.requires_two %}<span style="font-size:7.5pt;">👥</span>{% endif %}</td>
+        <td>{{ a.task.category or '—' }}</td>
+        <td style="text-align:center; color:#c07030;">{{ '★' * a.task.importance }}</td>
+        <td>{% if a.task.requires_two %}
+              <span style="color:#2a9d8f; font-weight:700;">Both</span>
+            {% else %}
+              <span style="color:{{ a.member.color }}; font-weight:700;">{{ a.member.name }}</span>
+            {% endif %}
+        </td>
+        <td style="text-align:center;"><span class="leg-checkbox" style="display:inline-block;"></span></td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+
+{# ── Monthly section ──────────────────────────────────────────────────────────── #}
+{% if monthly_assignments %}
+{% set seen_mo = namespace(v=[]) %}
+<div class="period-section">
+  <div class="period-title">🌙 Monthly Tasks (this month)</div>
+  <table class="period-table">
+    <thead>
+      <tr>
+        <th style="width:38%;">Task</th>
+        <th style="width:16%;">Room</th>
+        <th style="width:10%; text-align:center;">★</th>
+        <th style="width:20%;">Who</th>
+        <th style="width:16%; text-align:center;">Done</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set mo_cur_cat = namespace(v=None) %}
+      {% for a in monthly_assignments | sort(attribute='task.category') | sort(attribute='task.importance', reverse=True) %}
+      {% if a.task_id not in seen_mo.v %}
+      {% set seen_mo.v = seen_mo.v + [a.task_id] %}
+      {% set this_cat = a.task.category if a.task.category else '' %}
+      {% if this_cat != mo_cur_cat.v %}
+        {% set mo_cur_cat.v = this_cat %}
+        <tr class="cat-row"><td colspan="5">🏠 {{ this_cat if this_cat else 'General' }}</td></tr>
+      {% endif %}
+      <tr>
+        <td>{{ a.task.name }} {% if a.task.requires_two %}<span style="font-size:7.5pt;">👥</span>{% endif %}</td>
+        <td>{{ a.task.category or '—' }}</td>
+        <td style="text-align:center; color:#c07030;">{{ '★' * a.task.importance }}</td>
+        <td>{% if a.task.requires_two %}
+              <span style="color:#2a9d8f; font-weight:700;">Both</span>
+            {% else %}
+              <span style="color:{{ a.member.color }}; font-weight:700;">{{ a.member.name }}</span>
+            {% endif %}
+        </td>
+        <td style="text-align:center;"><span class="leg-checkbox" style="display:inline-block;"></span></td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+
+
+</body>
+</html>

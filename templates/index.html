@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Weekly Plan — Home Planner{% endblock %}
+
+{% block content %}
+
+{# ── Header ───────────────────────────────────────────────────────────────── #}
+<div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold page-title">
+      {% if is_next_week %}📅 Next Week's Plan{% else %}🌊 Weekly Plan{% endif %}
+    </h1>
+    <small class="text-muted">
+      {{ remaining_days[0].strftime('%b %d') }}
+      – {{ remaining_days[-1].strftime('%b %d, %Y') }}
+      {% if not is_next_week %}&nbsp;·&nbsp; Today is {{ today.strftime('%A, %B %d') }}{% endif %}
+    </small>
+  </div>
+  <div class="ms-auto d-flex gap-2">
+    {% if is_next_week %}
+      <a href="{{ url_for('index', hid=hid) }}" class="btn btn-outline-secondary">
+        ← This Week
+      </a>
+      <form method="post" action="{{ url_for('generate_next', hid=hid) }}">
+        <button class="btn btn-ocean" type="submit">
+          🔀 {% if plan_exists %}Regenerate Next Week{% else %}Generate Next Week{% endif %}
+        </button>
+      </form>
+    {% else %}
+      <a href="{{ url_for('index_next', hid=hid) }}" class="btn btn-outline-secondary">
+        Next Week →
+      </a>
+      <form method="post" action="{{ url_for('generate', hid=hid) }}">
+        <button class="btn btn-ocean" type="submit">
+          🔀 {% if plan_exists %}Regenerate Plan{% else %}Generate Plan{% endif %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if not plan_exists %}
+<div class="alert alert-sea">
+  🐚 No plan yet — click
+  <strong>{% if is_next_week %}Generate Next Week{% else %}Generate Plan{% endif %}</strong>
+  to assign tasks{% if is_next_week %} for next week{% else %} for the rest of the week{% endif %}.
+</div>
+{% endif %}
+
+{# ── Weekly table (days × members) ────────────────────────────────────────── #}
+{% if plan_exists %}
+<div class="card sea-card shadow-sm mb-4">
+  <div class="card-header sea-card-header fw-semibold">
+    🗓 Weekly Overview
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-bordered plan-table mb-0">
+        <thead class="thead-ocean">
+          <tr>
+            <th class="day-col">Day</th>
+            {% for m in members %}
+            <th style="border-left: 3px solid {{ m.color }};">
+              <span class="member-dot" style="background:{{ m.color }};"></span>
+              {{ m.name }}
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in remaining_days %}
+          {% set is_today = (day == today) %}
+          <tr class="{% if is_today %}today-row{% endif %}">
+            <td class="day-cell fw-semibold">
+              {% if is_today %}<span class="today-arrow">▶</span>{% endif %}
+              <span class="day-name">{{ day.strftime('%a') }}</span>
+              <span class="day-date text-muted">{{ day.strftime('%b %d') }}</span>
+            </td>
+            {% for m in members %}
+            <td class="tasks-cell" style="border-left: 2px solid {{ m.color }}30;">
+              {% set cell_tasks = daily_grid[day][m.id] %}
+              {% if cell_tasks %}
+                <ul class="task-list mb-0">
+                  {% for a in cell_tasks %}
+                  <li class="task-item">
+                    <span class="task-bullet" style="color:{{ m.color }};">⬡</span>
+                    <span class="task-name">
+                      {{ a.task.name }}
+                      {% if a.task.requires_two %}<span class="two-people-badge">👥</span>{% endif %}
+                    </span>
+                    <span class="task-badges">
+                      <span class="badge importance-badge imp-{{ a.task.importance }}"
+                            title="Importance {{ a.task.importance }}/5">
+                        {{ '★' * a.task.importance }}
+                      </span>
+                      <span class="badge effort-badge" title="Effort {{ a.task.effort }}/5">
+                        {{ '●' * a.task.effort }}
+                      </span>
+                    </span>
+                  </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# ── Effort summary ────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  {% for m in members %}
+  {% set total_effort = namespace(v=0) %}
+  {% set total_count  = namespace(v=0) %}
+  {% for day in remaining_days %}
+    {% for a in daily_grid[day][m.id] %}
+      {% set total_effort.v = total_effort.v + a.task.effort %}
+      {% set total_count.v  = total_count.v + 1 %}
+    {% endfor %}
+  {% endfor %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card sea-card shadow-sm h-100" style="border-top: 3px solid {{ m.color }};">
+      <div class="card-body">
+        <h6 class="card-title mb-2">
+          <span class="member-dot" style="background:{{ m.color }};"></span>
+          {{ m.name }}
+        </h6>
+        <div class="d-flex gap-4">
+          <div class="text-center">
+            <div class="fs-3 fw-bold" style="color:{{ m.color }};">{{ total_effort.v }}</div>
+            <small class="text-muted">effort pts</small>
+          </div>
+          <div class="text-center">
+            <div class="fs-3 fw-bold text-secondary">{{ total_count.v }}</div>
+            <small class="text-muted">tasks</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ── Bi-weekly list ────────────────────────────────────────────────────────── #}
+{% if biweekly_assignments %}
+<div class="card sea-card shadow-sm mb-4">
+  <div class="card-header sea-card-header fw-semibold">
+    🔁 Bi-weekly Tasks <small class="text-muted fw-normal">(this fortnight)</small>
+  </div>
+  {% set seen = namespace(ids=[]) %}
+  <ul class="list-group list-group-flush">
+    {% for a in biweekly_assignments %}{% if a.task_id not in seen.ids %}
+    {% set seen.ids = seen.ids + [a.task_id] %}
+    <li class="list-group-item period-list-item d-flex align-items-center gap-3">
+      <span class="period-bullet">🐠</span>
+      <div class="flex-grow-1">
+        {{ a.task.name }}
+        {% if a.task.requires_two %}<span class="two-people-badge">👥</span>{% endif %}
+        {% if a.task.category %}
+          <span class="badge cat-badge ms-1">{{ a.task.category }}</span>
+        {% endif %}
+      </div>
+      <span class="badge importance-badge imp-{{ a.task.importance }}">
+        {{ '★' * a.task.importance }}
+      </span>
+      {% if a.task.requires_two %}
+        <span class="fw-semibold small" style="color:#2a9d8f;">👥 Both</span>
+      {% else %}
+        <span class="fw-semibold small" style="color:{{ a.member.color }};">
+          <span class="member-dot" style="background:{{ a.member.color }};"></span>
+          {{ a.member.name }}
+        </span>
+      {% endif %}
+    </li>
+    {% endif %}{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{# ── Monthly list ──────────────────────────────────────────────────────────── #}
+{% if monthly_assignments %}
+<div class="card sea-card shadow-sm mb-4">
+  <div class="card-header sea-card-header fw-semibold">
+    🌙 Monthly Tasks <small class="text-muted fw-normal">(this month)</small>
+  </div>
+  {% set seen2 = namespace(ids=[]) %}
+  <ul class="list-group list-group-flush">
+    {% for a in monthly_assignments %}{% if a.task_id not in seen2.ids %}
+    {% set seen2.ids = seen2.ids + [a.task_id] %}
+    <li class="list-group-item period-list-item d-flex align-items-center gap-3">
+      <span class="period-bullet">🐚</span>
+      <div class="flex-grow-1">
+        {{ a.task.name }}
+        {% if a.task.requires_two %}<span class="two-people-badge">👥</span>{% endif %}
+        {% if a.task.category %}
+          <span class="badge cat-badge ms-1">{{ a.task.category }}</span>
+        {% endif %}
+      </div>
+      <span class="badge importance-badge imp-{{ a.task.importance }}">
+        {{ '★' * a.task.importance }}
+      </span>
+      {% if a.task.requires_two %}
+        <span class="fw-semibold small" style="color:#2a9d8f;">👥 Both</span>
+      {% else %}
+        <span class="fw-semibold small" style="color:{{ a.member.color }};">
+          <span class="member-dot" style="background:{{ a.member.color }};"></span>
+          {{ a.member.name }}
+        </span>
+      {% endif %}
+    </li>
+    {% endif %}{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if not biweekly_assignments and not monthly_assignments and not plan_exists %}
+<p class="text-center py-5" style="color:#a0b8b5;">🌴 Generate a plan to see assignments here.</p>
+{% endif %}
+
+{% endblock %}

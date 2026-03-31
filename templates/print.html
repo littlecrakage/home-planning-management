@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weekly Plan — {{ today.strftime('%b %d, %Y') }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 9.5pt;
+      color: #2d2d2d;
+      background: #fff;
+      padding: 10mm 12mm;
+    }
+
+    /* ── Screen toolbar ── */
+    .no-print {
+      background: #e3f6f5;
+      border: 1px solid #7ecdc7;
+      padding: 9px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      display: flex; gap: 12px; align-items: center;
+      font-size: 10pt;
+    }
+    .btn-print {
+      background: #1a6b6b; color: #fff; border: none;
+      padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 10pt;
+    }
+
+    /* ── Page header ── */
+    .print-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2.5px solid #1a6b6b;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+    }
+    .print-header h1 { font-size: 16pt; font-weight: 800; color: #1a6b6b; }
+    .print-header .sub { font-size: 9pt; color: #666; margin-top: 2px; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex; gap: 12px; align-items: center;
+      font-size: 8.5pt;
+      flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .leg-badge {
+      width: 18px; height: 18px; border-radius: 3px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 8pt; font-weight: 700; color: #fff;
+    }
+
+    /* ── Main table ── */
+    .plan-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+      font-size: 8.5pt;
+    }
+
+    /* Header row */
+    .plan-table thead th {
+      background: #1a6b6b;
+      color: #e8f8f7;
+      padding: 4px 2px;
+      text-align: center;
+      font-weight: 600;
+      border: 1px solid #155858;
+      white-space: nowrap;
+      font-size: 8pt;
+    }
+    .plan-table thead th.task-col {
+      text-align: left;
+      width: 38%;
+      min-width: 110px;
+    }
+    .plan-table thead th.today-col {
+      background: #2a9d8f;
+    }
+
+    /* Category group — keep entirely on one page */
+    .cat-group {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Category separator row */
+    .cat-row td {
+      background: #1a6b6b;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 9.5pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 6px 10px;
+      border: 1px solid #135050;
+      border-left: 4px solid #52c5b8;
+    }
+
+    /* Task rows */
+    .task-row td {
+      border: 1px solid #d8eeec;
+      padding: 0;
+      vertical-align: middle;
+    }
+    .task-row:nth-child(even) td { background: #fafefe; }
+
+    /* Task name cell */
+    .task-name-cell {
+      padding: 4px 8px;
+      font-size: 8.5pt;
+      line-height: 1.3;
+    }
+    .task-imp {
+      display: inline-block;
+      font-size: 7pt;
+      color: #c07030;
+      letter-spacing: -1px;
+      margin-left: 3px;
+    }
+    .task-two-icon { font-size: 8pt; margin-left: 2px; }
+
+    /* Day assignment cell */
+    .day-cell {
+      text-align: center;
+      padding: 2px;
+      min-width: 0;
+      width: 8%;
+    }
+    .day-cell.empty { color: #ccc; font-size: 8pt; }
+
+    /* Member badge inside cell */
+    .member-badge {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .m-initial {
+      width: 16px; height: 16px;
+      border-radius: 3px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 7.5pt; font-weight: 700; color: #fff;
+    }
+    .m-checkbox {
+      width: 10px; height: 10px;
+      border: 1.5px solid #666;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    /* Two-person cell */
+    .two-cell {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .two-icon { font-size: 10pt; line-height: 1; }
+
+    /* ── Section subtitles (daily / weekly separators) ── */
+    .section-subtitle {
+      font-size: 10pt; font-weight: 700; color: #fff;
+      background: #2a9d8f;
+      padding: 5px 10px;
+      margin-bottom: 0;
+      border-radius: 4px 4px 0 0;
+      letter-spacing: 0.3px;
+    }
+    .section-subtitle + table { border-top: none; }
+
+    /* ── Period sections ── */
+    .period-section {
+      margin-top: 16px;
+      page-break-inside: avoid;
+    }
+    .period-title {
+      font-size: 10.5pt; font-weight: 700; color: #1a6b6b;
+      border-bottom: 1.5px solid #2a9d8f;
+      padding-bottom: 3px; margin-bottom: 8px;
+    }
+    .period-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    .period-table td, .period-table th {
+      border: 1px solid #d8eeec;
+      padding: 4px 8px;
+    }
+    .period-table thead th { background: #1a6b6b; color: #e8f8f7; font-weight: 600; }
+    .period-table .cat-row td {
+      background: #f0faf9; color: #1a6b6b;
+      font-weight: 700; font-size: 7.5pt; text-transform: uppercase;
+    }
+
+    /* ── Footer ── */
+    .print-footer {
+      margin-top: 14px; border-top: 1px solid #ccc;
+      padding-top: 5px; font-size: 7.5pt; color: #aaa;
+      display: flex; justify-content: space-between;
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { padding: 6mm 7mm; }
+      @page { margin: 7mm; size: landscape; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  Rows = tasks &nbsp;·&nbsp; Columns = days &nbsp;·&nbsp; Cell = who does it + checkbox
+  <button class="btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+  <a href="{{ url_for('index_next' if is_next_week else 'index', hid=hid) }}" style="font-size:10pt; color:#1a6b6b;">← Back</a>
+</div>
+
+{# ── Page header ─────────────────────────────────────────────────────────────── #}
+<div class="print-header">
+  <div>
+    <h1>🌊 Home Planner</h1>
+    <div class="sub">
+      {{ remaining_days[0].strftime('%A %b %d') }} –
+      {{ remaining_days[-1].strftime('%A %b %d, %Y') }}
+      &nbsp;·&nbsp; Printed {{ today.strftime('%B %d, %Y') }}
+    </div>
+  </div>
+  <div class="legend">
+    {% for m in members %}
+    <div class="legend-item">
+      <span class="leg-badge" style="background:{{ m.color }};">{{ m.name[0] }}</span>
+      {{ m.name }}
+    </div>
+    {% endfor %}
+    <div class="legend-item">
+      <span class="leg-badge" style="background:#2a9d8f;">👥</span> Both
+    </div>
+    <div class="legend-item">
+      <span class="m-checkbox" style="display:inline-block;"></span> To do
+    </div>
+  </div>
+</div>
+
+{# ─────────────────────────────────────────────────────────────────────────────
+   SECTION 1 — Daily tasks rotation grid (rows = tasks, cols = days)
+───────────────────────────────────────────────────────────────────────────── #}
+{% set daily_tasks_print = sorted_tasks | selectattr('recurrence', 'in', ['daily', 'every2days']) | list %}
+{% if daily_tasks_print %}
+<div class="section-subtitle">📅 Daily Tasks — rotation schedule</div>
+<table class="plan-table">
+  <thead>
+    <tr>
+      <th class="task-col">Task</th>
+      {% for day in remaining_days %}
+      <th {% if day == today %}class="today-col"{% endif %}>
+        {{ day.strftime('%a') }}<br>
+        <span style="font-weight:400; font-size:7.5pt;">{{ day.strftime('%b %d') }}</span>
+        {% if day == today %}<br><span style="font-size:7pt; opacity:0.85;">Today</span>{% endif %}
+      </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  {% set cur_cat    = namespace(v=None) %}
+  {% set open_tbody = namespace(v=False) %}
+  {% for task in daily_tasks_print %}
+  {% if task.id in task_day_map %}
+    {% set this_cat = task.category if task.category else '' %}
+    {% if this_cat != cur_cat.v %}
+      {% if open_tbody.v %}</tbody>{% endif %}
+      {% set cur_cat.v = this_cat %}
+      {% set open_tbody.v = True %}
+      <tbody class="cat-group">
+      <tr class="cat-row">
+        <td colspan="{{ remaining_days|length + 1 }}">🏠 {{ this_cat if this_cat else 'General' }}</td>
+      </tr>
+    {% endif %}
+    <tr class="task-row">
+      <td class="task-name-cell">
+        {{ task.name }}<span class="task-imp">{{ '★' * task.importance }}</span>
+        {% if task.requires_two %}<span class="task-two-icon">👥</span>{% endif %}
+      </td>
+      {% for day in remaining_days %}
+      {% set da = task_day_map[task.id].get(day, []) %}
+      {% if da %}
+        {% if task.requires_two %}
+        <td class="day-cell" style="background:#2a9d8f18;">
+          <div class="two-cell"><span class="two-icon">👥</span><span class="m-checkbox"></span></div>
+        </td>
+        {% else %}
+        <td class="day-cell" style="background:{{ da[0].member.color }}18;">
+          <div class="member-badge">
+            <span class="m-initial" style="background:{{ da[0].member.color }};">{{ da[0].member.name[0] }}</span>
+            <span class="m-checkbox"></span>
+          </div>
+        </td>
+        {% endif %}
+      {% else %}
+        <td class="day-cell empty">—</td>
+      {% endif %}
+      {% endfor %}
+    </tr>
+  {% endif %}
+  {% endfor %}
+  {% if open_tbody.v %}</tbody>{% endif %}
+</table>
+{% endif %}
+
+{# ─────────────────────────────────────────────────────────────────────────────
+   SECTION 2 — Weekly / ad-hoc tasks (one-off this week, flexible day)
+───────────────────────────────────────────────────────────────────────────── #}
+{% set weekly_tasks_print = sorted_tasks | selectattr('recurrence', 'in', ['weekly', 'adhoc']) | list
+                          | selectattr('id', 'in', task_day_map) | list %}
+{% if weekly_tasks_print %}
+<div class="period-section">
+  <div class="section-subtitle" style="margin-top:14px;">📋 Weekly / One-time Tasks</div>
+  <table class="period-table" style="border-top:none;">
+    <thead>
+      <tr>
+        <th style="width:36%;">Task</th>
+        <th style="width:14%;">Room</th>
+        <th style="width:9%; text-align:center;">★</th>
+        <th style="width:18%;">Suggested day</th>
+        <th style="width:13%;">Who</th>
+        <th style="width:10%; text-align:center;">Done</th>
+      </tr>
+    </thead>
+    {% set w_cur_cat    = namespace(v=None) %}
+    {% set w_open_tbody = namespace(v=False) %}
+    {% for task in weekly_tasks_print %}
+      {% set this_cat = task.category if task.category else '' %}
+      {% if this_cat != w_cur_cat.v %}
+        {% if w_open_tbody.v %}</tbody>{% endif %}
+        {% set w_cur_cat.v = this_cat %}
+        {% set w_open_tbody.v = True %}
+        <tbody class="cat-group">
+        <tr class="cat-row"><td colspan="6">🏠 {{ this_cat if this_cat else 'General' }}</td></tr>
+      {% endif %}
+      {# Retrieve the assigned day and member from task_day_map #}
+      {% set assigned_day = task_day_map[task.id].keys() | list | first %}
+      {% set assigned_list = task_day_map[task.id][assigned_day] %}
+      <tr>
+        <td style="padding:4px 8px; font-size:8.5pt;">
+          {{ task.name }}
+          {% if task.requires_two %}<span style="font-size:8pt;"> 👥</span>{% endif %}
+        </td>
+        <td style="padding:4px 8px; font-size:8pt;">{{ task.category or '—' }}</td>
+        <td style="text-align:center; color:#c07030; font-size:8pt;">{{ '★' * task.importance }}</td>
+        <td style="padding:4px 8px; font-size:8.5pt; font-weight:600; color:#1a6b6b;">
+          {{ assigned_day.strftime('%A %b %d') }}
+        </td>
+        <td style="padding:4px 8px; font-size:8.5pt; font-weight:700;">
+          {% if task.requires_two %}
+            <span style="color:#2a9d8f;">Both</span>
+          {% else %}
+            <span style="color:{{ assigned_list[0].member.color }};">{{ assigned_list[0].member.name }}</span>
+          {% endif %}
+        </td>
+        <td style="text-align:center;"><span class="m-checkbox" style="display:inline-block;"></span></td>
+      </tr>
+    {% endfor %}
+    {% if w_open_tbody.v %}</tbody>{% endif %}
+  </table>
+</div>
+{% endif %}
+
+{% if not daily_tasks_print and not weekly_tasks_print %}
+<p style="color:#aaa; text-align:center; padding:30px;">
+  No plan generated yet — go back and click Generate Plan.
+</p>
+{% endif %}
+
+
+{# ── Bi-weekly list ───────────────────────────────────────────────────────────── #}
+{% if biweekly_assignments %}
+{% set seen_bw = namespace(v=[]) %}
+<div class="period-section">
+  <div class="period-title">🔁 Bi-weekly Tasks (this fortnight)</div>
+  <table class="period-table">
+    <thead>
+      <tr>
+        <th style="width:40%;">Task</th>
+        <th style="width:18%;">Room</th>
+        <th style="width:12%; text-align:center;">Importance</th>
+        <th style="width:15%;">Who</th>
+        <th style="width:15%; text-align:center;">Done</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set cur_bw_cat = namespace(v=None) %}
+      {% set bw_sorted = biweekly_assignments | sort(attribute='task.category') | sort(attribute='task.importance', reverse=True) %}
+      {% for a in bw_sorted %}{% if a.task_id not in seen_bw.v %}
+      {% set seen_bw.v = seen_bw.v + [a.task_id] %}
+      {% set this_cat = a.task.category if a.task.category else '' %}
+      {% if this_cat != cur_bw_cat.v %}
+        {% set cur_bw_cat.v = this_cat %}
+        <tr class="cat-row">
+          <td colspan="5">🏠 {{ this_cat if this_cat else 'General' }}</td>
+        </tr>
+      {% endif %}
+      <tr>
+        <td>{{ a.task.name }} {% if a.task.requires_two %}<span style="font-size:8pt;">👥</span>{% endif %}</td>
+        <td>{{ a.task.category or '—' }}</td>
+        <td style="text-align:center; color:#c07030;">{{ '★' * a.task.importance }}</td>
+        <td>
+          {% if a.task.requires_two %}
+            <span style="color:#2a9d8f; font-weight:700;">Both</span>
+          {% else %}
+            <span style="color:{{ a.member.color }}; font-weight:700;">{{ a.member.name }}</span>
+          {% endif %}
+        </td>
+        <td style="text-align:center;">
+          <span class="m-checkbox" style="display:inline-block;"></span>
+        </td>
+      </tr>
+      {% endif %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+
+{# ── Monthly list ─────────────────────────────────────────────────────────────── #}
+{% if monthly_assignments %}
+{% set seen_mo = namespace(v=[]) %}
+<div class="period-section">
+  <div class="period-title">🌙 Monthly Tasks (this month)</div>
+  <table class="period-table">
+    <thead>
+      <tr>
+        <th style="width:40%;">Task</th>
+        <th style="width:18%;">Room</th>
+        <th style="width:12%; text-align:center;">Importance</th>
+        <th style="width:15%;">Who</th>
+        <th style="width:15%; text-align:center;">Done</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set cur_mo_cat = namespace(v=None) %}
+      {% set mo_sorted = monthly_assignments | sort(attribute='task.category') | sort(attribute='task.importance', reverse=True) %}
+      {% for a in mo_sorted %}{% if a.task_id not in seen_mo.v %}
+      {% set seen_mo.v = seen_mo.v + [a.task_id] %}
+      {% set this_cat = a.task.category if a.task.category else '' %}
+      {% if this_cat != cur_mo_cat.v %}
+        {% set cur_mo_cat.v = this_cat %}
+        <tr class="cat-row">
+          <td colspan="5">🏠 {{ this_cat if this_cat else 'General' }}</td>
+        </tr>
+      {% endif %}
+      <tr>
+        <td>{{ a.task.name }} {% if a.task.requires_two %}<span style="font-size:8pt;">👥</span>{% endif %}</td>
+        <td>{{ a.task.category or '—' }}</td>
+        <td style="text-align:center; color:#c07030;">{{ '★' * a.task.importance }}</td>
+        <td>
+          {% if a.task.requires_two %}
+            <span style="color:#2a9d8f; font-weight:700;">Both</span>
+          {% else %}
+            <span style="color:{{ a.member.color }}; font-weight:700;">{{ a.member.name }}</span>
+          {% endif %}
+        </td>
+        <td style="text-align:center;">
+          <span class="m-checkbox" style="display:inline-block;"></span>
+        </td>
+      </tr>
+      {% endif %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+
+<div class="print-footer">
+  <span>🌊 Home Planner — {{ today.strftime('%B %d, %Y') }}</span>
+  <span>
+    Cell colour = assignee &nbsp;·&nbsp; ☐ = to do &nbsp;·&nbsp;
+    ★ = importance (most critical first) &nbsp;·&nbsp; 👥 = both people
+  </span>
+</div>
+
+</body>
+</html>
