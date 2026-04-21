@@ -269,9 +269,6 @@
 {%- set outdoor_d = g_backyard.daily  + g_frontyard.daily  + g_churrasco.daily -%}
 {%- set outdoor_w = g_backyard.weekly + g_frontyard.weekly + g_churrasco.weekly -%}
 
-{# Combined block: Garage + Laundry #}
-{%- set gar_lau_d = g_garage.daily  + g_laundry.daily -%}
-{%- set gar_lau_w = g_garage.weekly + g_laundry.weekly -%}
 
 {# ─── Macro: render a single category block ───────────────────────────────── #}
 {% macro render_block(label, daily_tasks, weekly_tasks) %}
@@ -421,9 +418,10 @@
       {%- endif %}
     </div>
 
-    {# ── Column 3: Garage · Laundry ──────────────────────────────────────── #}
+    {# ── Column 3: Garage · Laundry (separate blocks) ───────────────────── #}
     <div class="pcol">
-      {{ render_block('Garage · Laundry', gar_lau_d, gar_lau_w) }}
+      {{ render_block('Garage', g_garage.daily, g_garage.weekly) }}
+      {{ render_block('Laundry', g_laundry.daily, g_laundry.weekly) }}
     </div>
 
   </div>
